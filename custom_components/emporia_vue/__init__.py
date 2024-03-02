@@ -207,7 +207,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
                 name="sensor",
                 update_method=async_update_day_sensors,
                 # Polling interval. Will only be polled if there are subscribers.
-                update_interval=timedelta(minutes=1),
+                update_interval=timedelta(hours=1),
             )
             await coordinator_day_sensor.async_config_entry_first_refresh()
 
