@@ -145,7 +145,7 @@ class CurrentVuePowerSensor(CoordinatorEntity, SensorEntity):
                 4 * 1000 * usage
             )  # this might never be used but for safety, convert to rate
         else:
-            usage = round(usage, 3)
+            usage = round(usage, 6)
         return usage
 
     def scale_is_energy(self):
