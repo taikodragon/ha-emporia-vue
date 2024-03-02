@@ -115,8 +115,6 @@ class CurrentVuePowerSensor(CoordinatorEntity, SensorEntity):
     @property
     def unique_id(self):
         """Unique ID for the sensor."""
-        if self._scale == Scale.MINUTE.value:
-            return f"sensor.emporia_vue.instant.{self._channel.device_gid}-{self._channel.channel_num}"
         return f"sensor.emporia_vue.{self._scale}.{self._channel.device_gid}-{self._channel.channel_num}"
 
     @property
@@ -140,9 +138,7 @@ class CurrentVuePowerSensor(CoordinatorEntity, SensorEntity):
 
     def scale_usage(self, usage):
         """Scales the usage to the correct timescale and magnitude."""
-        if self._scale == Scale.MINUTE.value:
-            usage = round(60 * 1000 * usage)  # convert from kwh to w rate
-        elif self._scale == Scale.SECOND.value:
+        if self._scale == Scale.SECOND.value:
             usage = round(3600 * 1000 * usage)  # convert to rate
         elif self._scale == Scale.MINUTES_15.value:
             usage = round(
@@ -155,7 +151,6 @@ class CurrentVuePowerSensor(CoordinatorEntity, SensorEntity):
     def scale_is_energy(self):
         """Return True if the scale is an energy unit instead of power."""
         return self._scale not in (
-            Scale.MINUTE.value,
             Scale.SECOND.value,
             Scale.MINUTES_15.value,
         )
