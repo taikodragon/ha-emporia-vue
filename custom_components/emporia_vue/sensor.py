@@ -35,6 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
             CurrentVuePowerSensor(coordinator_1min, id)
             for _, id in enumerate(coordinator_1min.data)
         )
+        
 
     if coordinator_1mon:
         async_add_entities(
@@ -85,11 +86,11 @@ class CurrentVuePowerSensor(CoordinatorEntity, SensorEntity):
         ]:
             device_name = self._channel.name
         self._name = f"{device_name} {channel_num} {self._scale}"
-        self._isEnergy = self.scale_is_energy()
+        self._iskwh = self.scale_is_energy()
 
         self._attr_name = self._name
-        if self._isEnergy:
-            self._attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR if self._scale == Scale.MINUTE.value else UnitOfEnergy.KILO_WATT_HOUR
+        if self._iskwh:
+            self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
             self._attr_device_class = SensorDeviceClass.ENERGY
             self._attr_state_class = SensorStateClass.TOTAL
         else:
@@ -115,6 +116,8 @@ class CurrentVuePowerSensor(CoordinatorEntity, SensorEntity):
     @property
     def unique_id(self):
         """Unique ID for the sensor."""
+        if self._scale == Scale.MINUTE.value:
+            return f"sensor.emporia_vue.instant.{self._channel.device_gid}-{self._channel.channel_num}"
         return f"sensor.emporia_vue.{self._scale}.{self._channel.device_gid}-{self._channel.channel_num}"
 
     @property
@@ -139,20 +142,19 @@ class CurrentVuePowerSensor(CoordinatorEntity, SensorEntity):
     def scale_usage(self, usage):
         """Scales the usage to the correct timescale and magnitude."""
         if self._scale == Scale.MINUTE.value:
-            usage = round(1000 * (1/60) * usage, 6)  # convert from kW to Wh rate
+            usage = round(usage * 3600 * 1000, 2)
         elif self._scale == Scale.SECOND.value:
-            usage = round(3600 * 1000 * usage)  # convert to rate
+            usage = round(3600 * 1000 * usage, 2)  # convert to rate
         elif self._scale == Scale.MINUTES_15.value:
-            usage = round(
-                4 * 1000 * usage
-            )  # this might never be used but for safety, convert to rate
+            usage = round(4 * 1000 * usage, 2)  # this might never be used but for safety, convert to rate
         else:
-            usage = round(usage, 6)
+            usage = usage
         return usage
 
     def scale_is_energy(self):
         """Return True if the scale is an energy unit instead of power."""
         return self._scale not in (
+            Scale.MINUTE.value,
             Scale.SECOND.value,
             Scale.MINUTES_15.value,
         )
