@@ -85,11 +85,11 @@ class CurrentVuePowerSensor(CoordinatorEntity, SensorEntity):
         ]:
             device_name = self._channel.name
         self._name = f"{device_name} {channel_num} {self._scale}"
-        self._iskwh = self.scale_is_energy()
+        self._isEnergy = self.scale_is_energy()
 
         self._attr_name = self._name
-        if self._iskwh:
-            self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+        if self._isEnergy:
+            self._attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR if self._scale == Scale.MINUTE.value else UnitOfEnergy.KILO_WATT_HOUR
             self._attr_device_class = SensorDeviceClass.ENERGY
             self._attr_state_class = SensorStateClass.TOTAL
         else:
@@ -138,7 +138,9 @@ class CurrentVuePowerSensor(CoordinatorEntity, SensorEntity):
 
     def scale_usage(self, usage):
         """Scales the usage to the correct timescale and magnitude."""
-        if self._scale == Scale.SECOND.value:
+        if self._scale == Scale.MINUTE.value:
+            usage = round(1000 * (1/60) * usage, 6)  # convert from kW to Wh rate
+        elif self._scale == Scale.SECOND.value:
             usage = round(3600 * 1000 * usage)  # convert to rate
         elif self._scale == Scale.MINUTES_15.value:
             usage = round(
